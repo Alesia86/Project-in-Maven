@@ -1,16 +1,58 @@
 package dto;
 
+import javax.persistence.*;
 import java.sql.Date;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
-
+@Entity
+@Table(name="student")
 public class Student {
+
+@Column(name="id")
+@GeneratedValue(strategy=GenerationType.IDENTITY)
+@Id
     private int id;
+
+    @Column(name="first_name")
     private String firstName;
+
+    @Column(name="second_name")
     private String secondName;
+
+    @Column(name="birth_day")
     private Date birthDay;
+
+    @Column(name="enter_year")
     private int enterYear;
 
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name="STUDENT_ID")
+    private List<Mark> listOfMark;
+
+
+    public Student(String firstName, String secondName, Date birthDay, int enterYear) {
+        this.firstName = firstName;
+        this.secondName = secondName;
+        this.birthDay = birthDay;
+        this.enterYear = enterYear;
+    }
     public Student(){
+    }
+
+    public List<Mark> getListOfMark() {
+        return listOfMark;
+    }
+
+    public void setListOfMark(List<Mark> listOfMark) {
+        this.listOfMark = listOfMark;
+    }
+
+    public void addMarkToStudent(Mark mark){
+        if(listOfMark==null){
+            listOfMark=new ArrayList<>();
+        }
+        listOfMark.add(mark);
 
     }
 
@@ -21,6 +63,9 @@ public class Student {
     public void setId(int id) {
         this.id = id;
     }
+
+
+
 
     public String getFirstName() {
         return firstName;
