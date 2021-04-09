@@ -15,11 +15,6 @@ public class HibernateSessionFactoryUtil {
 
     public static SessionFactory getSessionFactory(){
         if(sessionFactory==null){
-            /*sessionFactory = new Configuration().configure("hibernate.cfg.xml")
-                    .addAnnotatedClass(Student.class)
-                    .addAnnotatedClass(Mark.class)
-                    .addAnnotatedClass(Subject.class)
-                    .buildSessionFactory();*/
             Configuration configuration = new Configuration().configure();
             configuration.addAnnotatedClass(Student.class);
             configuration.addAnnotatedClass(Mark.class);
