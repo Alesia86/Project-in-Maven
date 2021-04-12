@@ -1,17 +1,40 @@
 package dto;
 
+import javax.persistence.*;
 import java.util.Objects;
 
+@Entity
+@Table(name="mark")
 public class Mark {
+
+    @Column(name="id")
+    @GeneratedValue(strategy= GenerationType.IDENTITY)
+    @Id
     private int id;
+
+    @Column(name="STUDENT_ID")
     private int studentId;
+
+    @Column(name="SECONDNAME_STUDENT")
     private String secondNameOfStudent;
+
+    @Column(name="SUBJECT_ID")
     private int subjectId;
+
+    @Column(name="NAME_SUBJECT")
     private String nameOfSubject;
+
+    @Column(name="MARK")
     private int mark;
 
+    public Mark(int studentId, String secondNameOfStudent, int subjectId, String nameOfSubject, int mark) {
+        this.studentId = studentId;
+        this.secondNameOfStudent = secondNameOfStudent;
+        this.subjectId = subjectId;
+        this.nameOfSubject = nameOfSubject;
+        this.mark = mark;
+    }
     public Mark(){
-
     }
 
     public int getId() {

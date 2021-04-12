@@ -1,7 +1,6 @@
 package servlet;
 
 import dop.DaoException;
-import dop.GeneralConnectionPool;
 import dto.Mark;
 import dto.Student;
 import dto.Subject;
@@ -25,56 +24,14 @@ import static java.lang.Integer.parseInt;
 
 @WebServlet("/")
 public class ActionServlet extends HttpServlet {
-    public static GeneralConnectionPool poolSql;
-    static {
-        try {
-            if(poolSql==null)
-            poolSql = new GeneralConnectionPool();
-            poolSql.init("db.properties");
-        } catch (DaoException e) {
-            System.out.println("Ошибка загрузки пула");
-            System.out.println(poolSql.toString());
-
-        }
-    }
-
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        /*ServletContext cx=getServletContext();
-        GeneralConnectionPool pool=(GeneralConnectionPool) cx.getAttribute("pool");
-        if(pool==null){
-            try {
-                pool=GeneralConnectionPool.getInstance();
-                cx.setAttribute("pool",pool);
-            } catch (DaoException e) {
-                e.printStackTrace();
-            }
-        }*/
         runServlet(req,resp);
-        /*try {
-            throw new ServletException();
-        }catch(ServletException e){
-
-        }*/
-     // throw new ServletException();
-
     }
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        /*ServletContext cx=getServletContext();
-        GeneralConnectionPool pool=(GeneralConnectionPool) cx.getAttribute("pool");
-        try {
-            GeneralConnectionPool newPool=GeneralConnectionPool.getInstance();
-            System.out.println( pool.equals(newPool));
-        } catch (DaoException e) {
-            e.printStackTrace();
-        }*/
-
-
-
        runServlet(req,resp);
-      //  throw new ServletException();
     }
     private void runServlet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         String action = req.getParameter("ACTION");
@@ -170,7 +127,7 @@ public class ActionServlet extends HttpServlet {
         boolean messageLongInquiry=false;
         int messageListEmpty=0;
         try {
-             if(req.getParameter("findFirstName")==null){
+             if(req.getParameter("findFirstName")==null ||req.getParameter("findFirstName")==""){
                  findFirstName="";
             }
             else {
@@ -179,7 +136,7 @@ public class ActionServlet extends HttpServlet {
                      count++;
                  }
              }
-            if(req.getParameter("findSecondName")==null){
+            if(req.getParameter("findSecondName")==null||req.getParameter("findSecondName")==""){
                 findSecondName="";
             }
             else {
@@ -188,7 +145,7 @@ public class ActionServlet extends HttpServlet {
                     count++;
                 }
             }
-            if(req.getParameter("findBirthDay")==null){
+            if(req.getParameter("findBirthDay")==null||req.getParameter("findBirthDay")==""){
                 findBirthDay="";
             }
             else {
@@ -197,7 +154,7 @@ public class ActionServlet extends HttpServlet {
                     count++;
                 }
             }
-            if(req.getParameter("findEnterYear")==null){
+            if(req.getParameter("findEnterYear")==null||req.getParameter("findEnterYear")==""){
                 findEnterYear="";
             }
             else {
@@ -214,7 +171,6 @@ public class ActionServlet extends HttpServlet {
             req.setAttribute("findSecondName",findSecondName);
             req.setAttribute("findEnterYear",findEnterYear);
             req.setAttribute("findBirthDay",findBirthDay);
-            //serviceStudent = new StudentService(poolSql);
             if (req.getParameter("page") == null) {
                 page = 1;
             } else {
@@ -222,20 +178,23 @@ public class ActionServlet extends HttpServlet {
                     getServletContext().getRequestDispatcher("/").forward(req, resp);
                 }else{
                     page=Integer.parseInt(req.getParameter("page"));
+                    System.out.println("In integer page "+ page);
+
                 }
             }
+            System.out.println("Real In integer page "+ page);
             req.setAttribute("page",page);
-            System.out.println("1_page="+page);
-            serviceStudent = new StudentService(poolSql.getConnection());
+            //System.out.println("1_page="+page);
+            serviceStudent = new StudentService();
 
 if(count>0) {
     messageLongInquiry=true;
-    pages=countPage(serviceStudent.countLines(poolSql.getConnection(),"","","",""),10);System.out.println("1_pages="+pages);
-    listTenStudents = serviceStudent.selectGroupOfStudents(poolSql.getConnection(),"","","","",page,numberRow);
+    pages=countPage(serviceStudent.countLines("","","",""),10);System.out.println("count>0 page="+pages);
+    listTenStudents = serviceStudent.selectGroupOfStudents("","","","",page,numberRow);
 }else {
     System.out.println("Создание студента "+serviceStudent);
-    pages= countPage(serviceStudent.countLines(poolSql.getConnection(),findFirstName, findSecondName, findBirthDay, findEnterYear),10);System.out.println("2_pages="+pages);
-    listTenStudents = serviceStudent.selectGroupOfStudents(poolSql.getConnection(),findFirstName, findSecondName, findBirthDay, findEnterYear,page,numberRow);
+    pages= countPage(serviceStudent.countLines(findFirstName, findSecondName, findBirthDay, findEnterYear),10);System.out.println("count<0 page="+pages);
+    listTenStudents = serviceStudent.selectGroupOfStudents(findFirstName, findSecondName, findBirthDay, findEnterYear,page,numberRow);
     System.out.println("Список студента длина"+listTenStudents.size());
 
 }
@@ -251,14 +210,6 @@ if(count>0) {
         } catch (DaoException e) {
             req.setAttribute("errorMessage","daoException");
             getServletContext().getRequestDispatcher("/WEB-INF/view/PageForError.jsp").forward(req,resp);
-        }
-        finally {
-            try {
-                serviceStudent.close();
-            } catch (DaoException e) {
-                req.setAttribute("errorMessage","closeDaoException");
-                getServletContext().getRequestDispatcher("/WEB-INF/view/PageForError.jsp").forward(req,resp);
-            }
         }
     }
 
@@ -277,13 +228,6 @@ if(count>0) {
         } catch (DaoException e) {
             req.setAttribute("errorMessage","daoException");
             getServletContext().getRequestDispatcher("/WEB-INF/view/PageForError.jsp").forward(req,resp);
-        } finally {
-            try {
-                serviceSubject.close();
-            } catch (DaoException e) {
-                req.setAttribute("errorMessage","closeDaoException");
-                getServletContext().getRequestDispatcher("/WEB-INF/view/PageForError.jsp").forward(req,resp);
-            }
         }
     }
 
@@ -296,8 +240,8 @@ if(count>0) {
         int countField=0;
 
         try {
-            serviceStudent = new StudentService(poolSql.getConnection());
-            Student student = serviceStudent.findStudent(poolSql.getConnection(),idStudent);
+            serviceStudent = new StudentService();
+            Student student = serviceStudent.findStudent(idStudent);
             Student studentNew = new Student();
 
             boolean colorFirstName =false;
@@ -351,20 +295,13 @@ if(count>0) {
                 studentNew.setEnterYear(parseInt(enterYear));
                 studentNew.setBirthDay(Date.valueOf(birthDay));
                 studentNew.setSecondName(secondName);
-                serviceStudent.updateStudent(poolSql.getConnection(),studentNew);
+                serviceStudent.updateStudent(studentNew);
             }
             getServletContext().getRequestDispatcher("/WEB-INF/view/UpdateStudentFinish.jsp").forward(req,resp);
         } catch (DaoException e) {
             req.setAttribute("errorMessage","daoException");
             getServletContext().getRequestDispatcher("/WEB-INF/view/PageForError.jsp").forward(req,resp);
-            }finally {
-                    try {
-                        serviceStudent.close();
-                    } catch (DaoException e) {
-                        req.setAttribute("errorMessage","closeDaoException");
-                        getServletContext().getRequestDispatcher("/WEB-INF/view/PageForError.jsp").forward(req,resp);
-                    }
-                }
+            }
             }
 
     private void updateSubjectFinish(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -428,21 +365,13 @@ if(req.getParameter("nameSubject")!=null && req.getParameter("nameTeacher")!=nul
             req.setAttribute("errorMessage","daoException");
             getServletContext().getRequestDispatcher("/WEB-INF/view/PageForError.jsp").forward(req,resp);
             }
-             finally {
-                try {
-                    serviceSubject.close();
-                } catch (DaoException e) {
-                    req.setAttribute("errorMessage","closeDaoException");
-                    getServletContext().getRequestDispatcher("/WEB-INF/view/PageForError.jsp").forward(req,resp);
-                }
-            }
     }
     private void agreeToDeleteStudent(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         int idStudent=parseInt(req.getParameter("id"));
         StudentService serviceStudent=null;
         try{
-            serviceStudent=new StudentService(poolSql.getConnection());
-            Student student=serviceStudent.findStudent(poolSql.getConnection(),idStudent);
+            serviceStudent=new StudentService();
+            Student student=serviceStudent.findStudent(idStudent);
           req.setAttribute("messageAboutDelete",1);
             req.setAttribute("student",student);
             getServletContext().getRequestDispatcher("/WEB-INF/view/DeleteStudent.jsp").forward(req,resp);
@@ -450,21 +379,14 @@ if(req.getParameter("nameSubject")!=null && req.getParameter("nameTeacher")!=nul
             req.setAttribute("errorMessage","daoException");
             getServletContext().getRequestDispatcher("/WEB-INF/view/PageForError.jsp").forward(req,resp);
         }
-        finally {
-            try {
-                serviceStudent.close();
-            } catch (DaoException e) {
-                req.setAttribute("errorMessage","closeDaoException");
-                getServletContext().getRequestDispatcher("/WEB-INF/view/PageForError.jsp").forward(req,resp);
-            }
-        }
+
     }
     private void agreeToDeleteSubject(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         int idSubject=parseInt(req.getParameter("id"));
         SubjectService serviceSubject=null;
         try{
             serviceSubject=new SubjectService();
-            Subject  subject=serviceSubject.findSubject(idSubject);
+            Subject subject=serviceSubject.findSubject(idSubject);
             req.setAttribute("messageAboutDelete",1);
             req.setAttribute("subject",subject);
             getServletContext().getRequestDispatcher("/WEB-INF/view/DeleteSubject.jsp").forward(req,resp);
@@ -472,33 +394,18 @@ if(req.getParameter("nameSubject")!=null && req.getParameter("nameTeacher")!=nul
             req.setAttribute("errorMessage","daoException");
             getServletContext().getRequestDispatcher("/WEB-INF/view/PageForError.jsp").forward(req,resp);
         }
-        finally {
-            try {
-                serviceSubject.close();
-            } catch (DaoException e) {
-                req.setAttribute("errorMessage","closeDaoException");
-                getServletContext().getRequestDispatcher("/WEB-INF/view/PageForError.jsp").forward(req,resp);
-            }
-        }
     }
     private void deleteStudentFinish(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         StudentService serviceStudent=null;
         int idStudent = parseInt(req.getParameter("id"));
         try {
-            serviceStudent = new StudentService(poolSql.getConnection());
-            serviceStudent.removeStudent(poolSql.getConnection(),idStudent);
+            serviceStudent = new StudentService();
+            serviceStudent.removeStudent(idStudent);
             req.setAttribute("messageAboutDelete",2);
             getServletContext().getRequestDispatcher("/WEB-INF/view/DeleteStudent.jsp").forward(req,resp);
         } catch (DaoException e) {
             req.setAttribute("errorMessage","daoException");
             getServletContext().getRequestDispatcher("/WEB-INF/view/PageForError.jsp").forward(req,resp);
-        } finally {
-            try {
-                serviceStudent.close();
-            } catch (DaoException e) {
-                req.setAttribute("errorMessage","closeDaoException");
-                getServletContext().getRequestDispatcher("/WEB-INF/view/PageForError.jsp").forward(req,resp);
-            }
         }
     }
 
@@ -514,13 +421,6 @@ if(req.getParameter("nameSubject")!=null && req.getParameter("nameTeacher")!=nul
         } catch (DaoException e) {
             req.setAttribute("errorMessage","daoException");
             getServletContext().getRequestDispatcher("/WEB-INF/view/PageForError.jsp").forward(req,resp);
-        } finally {
-            try {
-                serviceSubject.close();
-            } catch (DaoException e) {
-                req.setAttribute("errorMessage","closeDaoException");
-                getServletContext().getRequestDispatcher("/WEB-INF/view/PageForError.jsp").forward(req,resp);
-            }
         }
     }
 
@@ -540,8 +440,8 @@ if(req.getParameter("nameSubject")!=null && req.getParameter("nameTeacher")!=nul
             }
         }
         try{
-            serviceStudent=new StudentService(poolSql.getConnection());
-            Student student=serviceStudent.findStudent(poolSql.getConnection(),idStudent);
+            serviceStudent=new StudentService();
+            Student student=serviceStudent.findStudent(idStudent);
             System.out.println(student);
             serviceMark = new MarkService();
             Collection<Mark> listMark = serviceMark.findMarkStudent(idStudent);
@@ -562,20 +462,6 @@ if(req.getParameter("nameSubject")!=null && req.getParameter("nameTeacher")!=nul
         } catch (DaoException e) {
             req.setAttribute("errorMessage","daoException");
             getServletContext().getRequestDispatcher("/WEB-INF/view/PageForError.jsp").forward(req,resp);
-        } finally {
-            try {
-                serviceMark.close();
-            } catch (DaoException e) {
-                req.setAttribute("errorMessage","closeDaoException");
-                getServletContext().getRequestDispatcher("/WEB-INF/view/PageForError.jsp").forward(req,resp);
-            } finally {
-                try {
-                    serviceStudent.close();
-                } catch (DaoException e) {
-                    req.setAttribute("errorMessage","closeDaoException");
-                    getServletContext().getRequestDispatcher("/WEB-INF/view/PageForError.jsp").forward(req,resp);
-                }
-            }
         }
                 }
 
@@ -617,14 +503,6 @@ if(req.getParameter("nameSubject")!=null && req.getParameter("nameTeacher")!=nul
             req.setAttribute("errorMessage","daoException");
             getServletContext().getRequestDispatcher("/WEB-INF/view/PageForError.jsp").forward(req,resp);
         }
-        finally{
-            try {
-                serviceSubject.close();
-            } catch (DaoException e) {
-                req.setAttribute("errorMessage","closeDaoException");
-                getServletContext().getRequestDispatcher("/WEB-INF/view/PageForError.jsp").forward(req,resp);
-            }
-        }
     }
 
 
@@ -643,8 +521,8 @@ if(req.getParameter("nameSubject")!=null && req.getParameter("nameTeacher")!=nul
         req.setAttribute("idStudent",idStudent);
         req.setAttribute("idSubject",idSubject);
         try {
-            serviceStudent = new StudentService(poolSql.getConnection());
-            Student student = serviceStudent.findStudent(poolSql.getConnection(),idStudent);
+            serviceStudent = new StudentService();
+            Student student = serviceStudent.findStudent(idStudent);
             req.setAttribute("student",student);
             serviceSubject = new SubjectService();
             Subject subject = serviceSubject.findSubject(idSubject);
@@ -679,32 +557,6 @@ if(req.getParameter("nameSubject")!=null && req.getParameter("nameTeacher")!=nul
             req.setAttribute("errorMessage","daoException");
             getServletContext().getRequestDispatcher("/WEB-INF/view/PageForError.jsp").forward(req,resp);
         }
-        finally {
-            try {
-                if(serviceMark!=null) {
-                    serviceMark.close();
-                }
-            } catch (DaoException e) {
-                req.setAttribute("errorMessage","closeDaoException");
-                getServletContext().getRequestDispatcher("/WEB-INF/view/PageForError.jsp").forward(req,resp);
-            }
-            finally {
-                try {
-                    serviceStudent.close();
-                } catch (DaoException e) {
-                    req.setAttribute("errorMessage","closeDaoException");
-                    getServletContext().getRequestDispatcher("/WEB-INF/view/PageForError.jsp").forward(req,resp);
-                }
-                finally {
-                    try {
-                        serviceSubject.close();
-                    } catch (DaoException e) {
-                        req.setAttribute("errorMessage","closeDaoException");
-                        getServletContext().getRequestDispatcher("/WEB-INF/view/PageForError.jsp").forward(req,resp);
-                    }
-                }
-            }
-        }
     }
 
 
@@ -722,8 +574,8 @@ if(req.getParameter("nameSubject")!=null && req.getParameter("nameTeacher")!=nul
         boolean messageEnter=false;
 
         try {
-            serviceStudent=new StudentService(poolSql.getConnection());
-            Student student=serviceStudent.findStudent(poolSql.getConnection(),idStudent);
+            serviceStudent=new StudentService();
+            Student student=serviceStudent.findStudent(idStudent);
             serviceMark=new MarkService();
             Mark mark=serviceMark.findMark(idMark);
             req.setAttribute("mark",mark);
@@ -757,22 +609,6 @@ if(req.getParameter("mark")!=null ) {
             req.setAttribute("errorMessage","daoException");
             getServletContext().getRequestDispatcher("/WEB-INF/view/PageForError.jsp").forward(req,resp);
         }
-        finally {
-            try {
-                serviceMark.close();
-            } catch (DaoException e) {
-                req.setAttribute("errorMessage","closeDaoException");
-                getServletContext().getRequestDispatcher("/WEB-INF/view/PageForError.jsp").forward(req,resp);
-            }
-            finally {
-                try {
-                    serviceStudent.close();
-                } catch (DaoException e) {
-                    req.setAttribute("errorMessage","closeDaoException");
-                    getServletContext().getRequestDispatcher("/WEB-INF/view/PageForError.jsp").forward(req,resp);
-                }
-            }
-        }
     }
 
     private void agreeToDeleteMark(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -783,8 +619,8 @@ if(req.getParameter("mark")!=null ) {
         StudentService serviceStudent=null;
         MarkService serviceMark=null;
         try {
-            serviceStudent=new StudentService(poolSql.getConnection());
-            Student student=serviceStudent.findStudent(poolSql.getConnection(),idStudent);
+            serviceStudent=new StudentService();
+            Student student=serviceStudent.findStudent(idStudent);
             serviceMark=new MarkService();
             Mark mark=serviceMark.findMark(idMark);
             req.setAttribute("mark",mark);
@@ -794,22 +630,7 @@ if(req.getParameter("mark")!=null ) {
             req.setAttribute("errorMessage","daoException");
             getServletContext().getRequestDispatcher("/WEB-INF/view/PageForError.jsp").forward(req,resp);
         }
-        finally {
-            try {
-                serviceStudent.close();
-            } catch (DaoException e) {
-                req.setAttribute("errorMessage","closeDaoException");
-                getServletContext().getRequestDispatcher("/WEB-INF/view/PageForError.jsp").forward(req,resp);
-            }
-            finally {
-                try {
-                    serviceMark.close();
-                } catch (DaoException e) {
-                    req.setAttribute("errorMessage","closeDaoException");
-                    getServletContext().getRequestDispatcher("/WEB-INF/view/PageForError.jsp").forward(req,resp);
-                }
-            }
-        }
+
     }
     private void deleteMarkFinish(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         MarkService serviceMark=null;
@@ -824,13 +645,6 @@ if(req.getParameter("mark")!=null ) {
         } catch (DaoException e) {
             req.setAttribute("errorMessage","daoException");
             getServletContext().getRequestDispatcher("/WEB-INF/view/PageForError.jsp").forward(req,resp);
-        } finally {
-            try {
-                serviceMark.close();
-            } catch (DaoException e) {
-                req.setAttribute("errorMessage","closeDaoException");
-                getServletContext().getRequestDispatcher("/WEB-INF/view/PageForError.jsp").forward(req,resp);
-            }
         }
     }
 
@@ -859,8 +673,8 @@ if(req.getParameter("mark")!=null ) {
             if (count == 0) {
                 StudentService serviceStudent = null;
                 try {
-                    serviceStudent=new StudentService(poolSql.getConnection());
-                    Collection<Student> listStudent = serviceStudent.findStudentMore(poolSql.getConnection(),secondName);
+                    serviceStudent=new StudentService();
+                    Collection<Student> listStudent = serviceStudent.findStudentMore(secondName);
                     req.setAttribute("list", listStudent);
                     if (listStudent.size() != 0) {
                         enterMessage = 1;
@@ -871,15 +685,6 @@ if(req.getParameter("mark")!=null ) {
                 } catch (DaoException e) {
                     req.setAttribute("errorMessage","daoException");
                     getServletContext().getRequestDispatcher("/WEB-INF/view/PageForError.jsp").forward(req,resp);
-                } finally {
-                    try {
-                        if (serviceStudent != null) {
-                            serviceStudent.close();
-                        }
-                    } catch (DaoException e) {
-                        req.setAttribute("errorMessage","closeDaoException");
-                        getServletContext().getRequestDispatcher("/WEB-INF/view/PageForError.jsp").forward(req,resp);
-                    }
                 }
             }
         getServletContext().getRequestDispatcher("/WEB-INF/view/FindStudent.jsp").forward(req,resp);
@@ -958,20 +763,20 @@ if(req.getParameter("mark")!=null ) {
             session.setAttribute("errorMessageEnterYear", errorMessageEnterYear);
             session.setAttribute("errorMessageBirthDay", errorMessageBirthDay);
             session.setAttribute("count", errorMessageBirthDay);
-            serviceStudent = new StudentService(poolSql.getConnection());
+           // serviceStudent = new StudentService();
             if (req.getParameter("firstName") == null && req.getParameter("secondName") == null && req.getParameter("birthDay") == null && req.getParameter("enterYear") == null) {
                 enterMessage = "Введите  данные студента";
                 session.setAttribute("enterMessage", enterMessage);
             } else {
                 if (count == 0) {
-                    try {
+
                         Student student = new Student();
                         student.setFirstName(req.getParameter("firstName"));
                         student.setSecondName(req.getParameter("secondName"));
                         student.setBirthDay(Date.valueOf(req.getParameter("birthDay")));
                         student.setEnterYear(parseInt(req.getParameter("enterYear")));
-                        serviceStudent = new StudentService(poolSql.getConnection());
-                        Collection<Student> list = serviceStudent.findStudentMore(poolSql.getConnection(),req.getParameter("enterYear"));
+                        serviceStudent = new StudentService();
+                        Collection<Student> list = serviceStudent.findStudentMore(req.getParameter("enterYear"));
                         if (list.size() != 0) {
                             boolean findStudent = false;
                             for (Student person : list) {
@@ -988,25 +793,16 @@ if(req.getParameter("mark")!=null ) {
                                 colorEnterYear = "class=\"colortext\" ";
                                 colorBirthDay = "class=\"colortext\" ";
                             } else {
-                                serviceStudent.add(poolSql.getConnection(),student);
+                                serviceStudent.add(student);
                                 enterMessage = "Студент добавлен";
                                 session.setAttribute("enterMessage", enterMessage);
                             }
                         } else {
-                            serviceStudent.add(poolSql.getConnection(),student);
+                            serviceStudent.add(student);
                             enterMessage = "Студент добавлен";
                             session.setAttribute("enterMessage", enterMessage);
                         }
                         getServletContext().getRequestDispatcher("/WEB-INF/view/AddStudent.jsp").forward(req, resp);
-                    } catch (DaoException daoException) {
-                        getServletContext().getRequestDispatcher("/university/option?ACTION=AddStudent").forward(req, resp);
-                    } finally {
-                        try {
-                            serviceStudent.close();
-                        } catch (DaoException e) {
-                            getServletContext().getRequestDispatcher("/university/option?ACTION=AddStudent").forward(req, resp);
-                        }
-                    }
                 }
             }
         } catch (DaoException e) {
@@ -1123,12 +919,6 @@ if(req.getParameter("mark")!=null ) {
                     }
                 } catch (DaoException daoException) {
                     getServletContext().getRequestDispatcher("/university/option?ACTION=LIST OF SUBJECT").forward(req,resp);
-                } finally {
-                    try {
-                        serviceSubject.close();
-                    } catch (DaoException e) {
-                        getServletContext().getRequestDispatcher("/university/option?ACTION=LIST OF SUBJECT").forward(req,resp);
-                    }
                 }
             }
         }
@@ -1195,12 +985,6 @@ if(req.getParameter("mark")!=null ) {
                     }
                 } catch (DaoException e) {
                     getServletContext().getRequestDispatcher("/university/option?ACTION=FindSubject").forward(req,resp);
-                } finally {
-                    try {
-                        serviceSubject.close();
-                    } catch (DaoException e) {
-                        getServletContext().getRequestDispatcher("/university/option?ACTION=FindSubject").forward(req,resp);
-                    }
                 }
             }
         }
